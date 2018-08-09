@@ -1,25 +1,25 @@
 var path = require('path')
-var DPack = require('..')
+var DWeb = require('..')
 
 var src = path.join(__dirname, '..')
 
-DPack(src, {temp: true}, function (err, dpack) {
+DWeb(src, {temp: true}, function (err, dweb) {
   if (err) throw err
 
-  var network = dpack.joinNetwork()
+  var network = dweb.joinNetwork()
   network.once('connection', function () {
     console.log('Connected')
   })
-  var progress = dpack.importFiles(src, {
-    ignore: ['**/@dpack/core/node_modules/**']
+  var progress = dweb.importFiles(src, {
+    ignore: ['**/@dweb/core/node_modules/**']
   }, function (err) {
     if (err) throw err
     console.log('Done importing')
-    console.log('Vault size:', dpack.vault.content.byteLength)
+    console.log('Vault size:', dweb.vault.content.byteLength)
   })
   progress.on('put', function (src, dest) {
     console.log('Added', dest.name)
   })
 
-  console.log(`Sharing: ${dpack.key.toString('hex')}\n`)
+  console.log(`Sharing: ${dweb.key.toString('hex')}\n`)
 })

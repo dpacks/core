@@ -6,7 +6,7 @@ var ram = require('random-access-memory')
 var countFiles = require('count-files')
 var helpers = require('./helpers')
 
-var DPack = require('..')
+var DWeb = require('..')
 
 // os x adds this if you view the fixtures in finder and breaks the file count assertions
 try { fs.unlinkSync(path.join(__dirname, 'fixtures', '.DS_Store')) } catch (e) { /* ignore error */ }
@@ -19,39 +19,39 @@ var fixtureStats = {
 }
 var liveKey
 
-test('share: prep', function (t) {
+test('dist: prep', function (t) {
   cleanFixtures(function () {
     t.end()
   })
 })
 
-test('share: create dpack with default ops', function (t) {
-  DPack(fixtures, function (err, dpack) {
+test('dist: create dpack with default ops', function (t) {
+  DWeb(fixtures, function (err, dweb) {
     t.error(err, 'cb err okay')
-    t.ok(dpack.path === fixtures, 'correct directory')
-    t.ok(dpack.vault, 'has vault')
-    t.ok(dpack.key, 'has key')
-    t.ok(dpack.live, 'is live')
-    t.ok(dpack.writable, 'is writable')
-    t.ok(!dpack.resumed, 'is not resumed')
+    t.ok(dweb.path === fixtures, 'correct directory')
+    t.ok(dweb.vault, 'has vault')
+    t.ok(dweb.key, 'has key')
+    t.ok(dweb.live, 'is live')
+    t.ok(dweb.writable, 'is writable')
+    t.ok(!dweb.resumed, 'is not resumed')
 
-    fs.stat(path.join(fixtures, '.dpack'), function (err, stat) {
+    fs.stat(path.join(fixtures, '.dweb'), function (err, stat) {
       t.error(err)
-      t.pass('creates .dpack dir')
+      t.pass('creates .dweb dir')
     })
 
-    liveKey = dpack.key
+    liveKey = dweb.key
     var putFiles = 0
-    var stats = dpack.trackStats()
-    var network = dpack.joinNetwork()
+    var stats = dweb.trackStats()
+    var network = dweb.joinNetwork()
 
     network.once('listening', function () {
       t.pass('network listening')
     })
 
-    var progress = dpack.importFiles(function (err) {
+    var progress = dweb.importFiles(function (err) {
       t.error(err, 'file import err okay')
-      var vault = dpack.vault
+      var vault = dweb.vault
       var st = stats.get()
       if (vault.version === st.version) return check()
       stats.once('update', check)
@@ -69,7 +69,7 @@ test('share: create dpack with default ops', function (t) {
 
         helpers.verifyFixtures(t, vault, function (err) {
           t.ifError(err)
-          dpack.close(function (err) {
+          dweb.close(function (err) {
             t.ifError(err)
             t.pass('close okay')
             t.end()
@@ -84,17 +84,17 @@ test('share: create dpack with default ops', function (t) {
   })
 })
 
-test('share: resume with .dpack folder', function (t) {
-  DPack(fixtures, function (err, dpack) {
+test('dist: resume with .dweb folder', function (t) {
+  DWeb(fixtures, function (err, dweb) {
     t.error(err, 'cb without error')
-    t.ok(dpack.writable, 'dpack still writable')
-    t.ok(dpack.resumed, 'resume flag set')
-    t.same(liveKey, dpack.key, 'key matches previous key')
-    var stats = dpack.trackStats()
+    t.ok(dweb.writable, 'dweb still writable')
+    t.ok(dweb.resumed, 'resume flag set')
+    t.same(liveKey, dweb.key, 'key matches previous key')
+    var stats = dweb.trackStats()
 
-    countFiles({fs: dpack.vault, name: '/'}, function (err, count) {
+    countFiles({fs: dweb.vault, name: '/'}, function (err, count) {
       t.ifError(err, 'count err')
-      var vault = dpack.vault
+      var vault = dweb.vault
 
       t.same(vault.version, 3, 'vault version still')
 
@@ -102,7 +102,7 @@ test('share: resume with .dpack folder', function (t) {
       t.same(st.byteLength, fixtureStats.bytes, 'bytes total still the same')
       t.same(count.bytes, fixtureStats.bytes, 'bytes still ok')
       t.same(count.files, fixtureStats.files, 'bytes still ok')
-      dpack.close(function () {
+      dweb.close(function () {
         cleanFixtures(function () {
           t.end()
         })
@@ -111,18 +111,18 @@ test('share: resume with .dpack folder', function (t) {
   })
 })
 
-test('share: resume with empty .dpack folder', function (t) {
+test('dist: resume with empty .dweb folder', function (t) {
   var emptyPath = path.join(__dirname, 'empty')
-  DPack(emptyPath, function (err, dpack) {
+  DWeb(emptyPath, function (err, dweb) {
     t.error(err, 'cb without error')
-    t.false(dpack.resumed, 'resume flag false')
+    t.false(dweb.resumed, 'resume flag false')
 
-    dpack.close(function () {
-      DPack(emptyPath, function (err, dpack) {
+    dweb.close(function () {
+      DWeb(emptyPath, function (err, dweb) {
         t.error(err, 'cb without error')
-        t.ok(dpack.resumed, 'resume flag set')
+        t.ok(dweb.resumed, 'resume flag set')
 
-        dpack.close(function () {
+        dweb.close(function () {
           rimraf(emptyPath, function () {
             t.end()
           })
@@ -133,11 +133,11 @@ test('share: resume with empty .dpack folder', function (t) {
 })
 
 if (!process.env.TRAVIS) {
-  test('share: live - editing file', function (t) {
-    DPack(fixtures, function (err, dpack) {
+  test('dist: live - editing file', function (t) {
+    DWeb(fixtures, function (err, dweb) {
       t.ifError(err, 'error')
 
-      var importer = dpack.importFiles({ watch: true }, function (err) {
+      var importer = dweb.importFiles({ watch: true }, function (err) {
         t.ifError(err, 'error')
         if (!err) t.fail('live import should not cb')
       })
@@ -149,10 +149,10 @@ if (!process.env.TRAVIS) {
       })
 
       function done () {
-        dpack.vault.stat('/folder/empty.txt', function (err, stat) {
+        dweb.vault.stat('/folder/empty.txt', function (err, stat) {
           t.ifError(err, 'error')
           t.same(stat.size, 9, 'empty file has new content')
-          dpack.close(function () {
+          dweb.close(function () {
             // make file empty again
             fs.writeFileSync(path.join(fixtures, 'folder', 'empty.txt'), '')
             t.end()
@@ -162,13 +162,13 @@ if (!process.env.TRAVIS) {
     })
   })
 
-  test('share: live resume & create new file', function (t) {
+  test('dist: live resume & create new file', function (t) {
     var newFile = path.join(fixtures, 'new.txt')
-    DPack(fixtures, function (err, dpack) {
+    DWeb(fixtures, function (err, dweb) {
       t.error(err, 'error')
-      t.ok(dpack.resumed, 'was resumed')
+      t.ok(dweb.resumed, 'was resumed')
 
-      var importer = dpack.importFiles({ watch: true }, function (err) {
+      var importer = dweb.importFiles({ watch: true }, function (err) {
         t.error(err, 'error')
         if (!err) t.fail('watch import should not cb')
       })
@@ -187,11 +187,11 @@ if (!process.env.TRAVIS) {
       }
 
       function done () {
-        dpack.vault.stat('/new.txt', function (err, stat) {
+        dweb.vault.stat('/new.txt', function (err, stat) {
           t.ifError(err, 'error')
           t.ok(stat, 'new file in vault')
           fs.unlink(newFile, function () {
-            dpack.close(function () {
+            dweb.close(function () {
               t.end()
             })
           })
@@ -201,44 +201,44 @@ if (!process.env.TRAVIS) {
   })
 }
 
-test('share: cleanup', function (t) {
+test('dist: cleanup', function (t) {
   cleanFixtures(function () {
     t.end()
   })
 })
 
-test('share: dir storage and opts.temp', function (t) {
-  DPack(fixtures, {temp: true}, function (err, dpack) {
+test('dist: dir storage and opts.temp', function (t) {
+  DWeb(fixtures, {temp: true}, function (err, dweb) {
     t.error(err, 'error')
-    t.false(dpack.resumed, 'resume flag false')
+    t.false(dweb.resumed, 'resume flag false')
 
-    dpack.importFiles(function (err) {
+    dweb.importFiles(function (err) {
       t.error(err, 'error')
-      helpers.verifyFixtures(t, dpack.vault, done)
+      helpers.verifyFixtures(t, dweb.vault, done)
     })
 
     function done (err) {
       t.error(err, 'error')
-      dpack.close(function () {
+      dweb.close(function () {
         t.end()
       })
     }
   })
 })
 
-test('share: ram storage & import other dir', function (t) {
-  DPack(ram, function (err, dpack) {
+test('dist: ram storage & import other dir', function (t) {
+  DWeb(ram, function (err, dweb) {
     t.error(err, 'error')
-    t.false(dpack.resumed, 'resume flag false')
+    t.false(dweb.resumed, 'resume flag false')
 
-    dpack.importFiles(fixtures, function (err) {
+    dweb.importFiles(fixtures, function (err) {
       t.error(err, 'error')
-      helpers.verifyFixtures(t, dpack.vault, done)
+      helpers.verifyFixtures(t, dweb.vault, done)
     })
 
     function done (err) {
       t.error(err, 'error')
-      dpack.close(function () {
+      dweb.close(function () {
         t.end()
       })
     }
@@ -247,5 +247,5 @@ test('share: ram storage & import other dir', function (t) {
 
 function cleanFixtures (cb) {
   cb = cb || function () {}
-  rimraf(path.join(fixtures, '.dpack'), cb)
+  rimraf(path.join(fixtures, '.dweb'), cb)
 }

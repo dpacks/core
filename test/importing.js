@@ -5,26 +5,26 @@ var rimraf = require('rimraf')
 var countFiles = require('count-files')
 var tmpDir = require('temporary-directory')
 
-var DPack = require('..')
+var DWeb = require('..')
 var fixtures = path.join(__dirname, 'fixtures')
 
 test('importing: import two directories at same time', function (t) {
-  rimraf.sync(path.join(fixtures, '.dpack')) // for previous failed tests
-  DPack(fixtures, {temp: true}, function (err, dpack) {
+  rimraf.sync(path.join(fixtures, '.dweb')) // for previous failed tests
+  DWeb(fixtures, {temp: true}, function (err, dweb) {
     t.error(err, 'error')
     var pending = 2
-    dpack.importFiles(function (err) {
+    dweb.importFiles(function (err) {
       t.error(err, 'error')
       t.pass('ok')
       if (!--pending) done()
     })
-    dpack.importFiles(path.join(__dirname, '..', 'examples'), function (err) {
+    dweb.importFiles(path.join(__dirname, '..', 'examples'), function (err) {
       t.error(err, 'error')
       if (!--pending) done()
     })
 
     function done () {
-      countFiles({fs: dpack.vault, name: '/'}, function (err, count) {
+      countFiles({fs: dweb.vault, name: '/'}, function (err, count) {
         t.error(err, 'error')
         t.same(count.files, 6, 'five files total')
         t.end()
@@ -34,15 +34,15 @@ test('importing: import two directories at same time', function (t) {
 })
 
 test('importing: custom ignore extends default (string)', function (t) {
-  rimraf.sync(path.join(fixtures, '.dpack')) // for previous failed tests
-  DPack(fixtures, {temp: true}, function (err, dpack) {
+  rimraf.sync(path.join(fixtures, '.dweb')) // for previous failed tests
+  DWeb(fixtures, {temp: true}, function (err, dweb) {
     t.error(err)
-    dpack.importFiles({ ignore: '**/*.js' }, function () {
-      var shouldIgnore = dpack.options.importer.ignore
-      t.ok(shouldIgnore('.dpack'), '.dpack folder ignored')
+    dweb.importFiles({ ignore: '**/*.js' }, function () {
+      var shouldIgnore = dweb.options.importer.ignore
+      t.ok(shouldIgnore('.dweb'), '.dweb folder ignored')
       t.ok(shouldIgnore('foo/bar.js'), 'custom ignore works')
       t.notOk(shouldIgnore('foo/bar.txt'), 'txt file gets to come along =)')
-      dpack.close(function () {
+      dweb.close(function () {
         t.end()
       })
     })
@@ -50,16 +50,16 @@ test('importing: custom ignore extends default (string)', function (t) {
 })
 
 test('importing: custom ignore extends default (array)', function (t) {
-  DPack(fixtures, {temp: true}, function (err, dpack) {
+  DWeb(fixtures, {temp: true}, function (err, dweb) {
     t.error(err)
-    dpack.importFiles({ ignore: ['super_secret_stuff/*', '**/*.txt'] }, function () {
-      var shouldIgnore = dpack.options.importer.ignore
+    dweb.importFiles({ ignore: ['super_secret_stuff/*', '**/*.txt'] }, function () {
+      var shouldIgnore = dweb.options.importer.ignore
 
-      t.ok(shouldIgnore('.dpack'), '.dpack still feeling left out =(')
+      t.ok(shouldIgnore('.dweb'), '.dweb still feeling left out =(')
       t.ok(shouldIgnore('password.txt'), 'file ignored')
       t.ok(shouldIgnore('super_secret_stuff/file.js'), 'secret stuff stays secret')
       t.notOk(shouldIgnore('foo/bar.js'), 'js file joins the party =)')
-      dpack.close(function () {
+      dweb.close(function () {
         t.end()
       })
     })
@@ -67,16 +67,16 @@ test('importing: custom ignore extends default (array)', function (t) {
 })
 
 test('importing: ignore hidden option turned off', function (t) {
-  DPack(fixtures, {temp: true}, function (err, dpack) {
+  DWeb(fixtures, {temp: true}, function (err, dweb) {
     t.error(err)
-    dpack.importFiles({ ignoreHidden: false }, function () {
-      var shouldIgnore = dpack.options.importer.ignore
+    dweb.importFiles({ ignoreHidden: false }, function () {
+      var shouldIgnore = dweb.options.importer.ignore
 
-      t.ok(shouldIgnore('.dpack'), '.dpack still feeling left out =(')
+      t.ok(shouldIgnore('.dweb'), '.dweb still feeling left out =(')
       t.notOk(shouldIgnore('.other-hidden'), 'hidden file NOT ignored')
       t.notOk(shouldIgnore('dir/.git'), 'hidden folders with dir NOT ignored')
-      dpack.close(function () {
-        rimraf.sync(path.join(fixtures, '.dpack'))
+      dweb.close(function () {
+        rimraf.sync(path.join(fixtures, '.dweb'))
         t.end()
       })
     })
@@ -84,10 +84,10 @@ test('importing: ignore hidden option turned off', function (t) {
 })
 
 test('importing: ignore dirs option turned off', function (t) {
-  DPack(fixtures, {temp: true}, function (err, dpack) {
+  DWeb(fixtures, {temp: true}, function (err, dweb) {
     t.error(err)
-    dpack.importFiles({ ignoreDirs: false }, function () {
-      var stream = dpack.vault.history()
+    dweb.importFiles({ ignoreDirs: false }, function () {
+      var stream = dweb.vault.history()
       var hasFolder = false
       var hasRoot = false
       stream.on('data', function (data) {
@@ -97,8 +97,8 @@ test('importing: ignore dirs option turned off', function (t) {
       stream.on('end', function () {
         t.ok(hasFolder, 'folder in metadata')
         t.ok(hasRoot, 'root in metadata')
-        dpack.close(function () {
-          rimraf.sync(path.join(fixtures, '.dpack'))
+        dweb.close(function () {
+          rimraf.sync(path.join(fixtures, '.dweb'))
           t.end()
         })
       })
@@ -107,34 +107,34 @@ test('importing: ignore dirs option turned off', function (t) {
 })
 
 test('importing: import with options but no callback', function (t) {
-  DPack(fixtures, {temp: true}, function (err, dpack) {
+  DWeb(fixtures, {temp: true}, function (err, dweb) {
     t.error(err)
-    var importer = dpack.importFiles({ dryRun: true })
+    var importer = dweb.importFiles({ dryRun: true })
     importer.on('error', function (err) {
       t.error(err, 'no error')
     })
-    dpack.close(function (err) {
+    dweb.close(function (err) {
       t.error(err, 'no err')
-      rimraf.sync(path.join(fixtures, '.dpack'))
+      rimraf.sync(path.join(fixtures, '.dweb'))
       t.end()
     })
   })
 })
 
-test('importing: import with .dpackignore', function (t) {
-  fs.writeFileSync(path.join(fixtures, '.dpackignore'), 'ignoreme.txt')
+test('importing: import with .dwebignore', function (t) {
+  fs.writeFileSync(path.join(fixtures, '.dwebignore'), 'ignoreme.txt')
   fs.writeFileSync(path.join(fixtures, 'ignoreme.txt'), 'hello world')
-  DPack(fixtures, {temp: true}, function (err, dpack) {
+  DWeb(fixtures, {temp: true}, function (err, dweb) {
     t.error(err)
-    var importer = dpack.importFiles(function (err) {
+    var importer = dweb.importFiles(function (err) {
       t.error(err)
 
-      var shouldIgnore = dpack.options.importer.ignore
-      t.ok(shouldIgnore('.dpack'), '.dpack ignored')
-      dpack.close(function () {
-        fs.unlinkSync(path.join(fixtures, '.dpackignore'))
+      var shouldIgnore = dweb.options.importer.ignore
+      t.ok(shouldIgnore('.dweb'), '.dweb ignored')
+      dweb.close(function () {
+        fs.unlinkSync(path.join(fixtures, '.dwebignore'))
         fs.unlinkSync(path.join(fixtures, 'ignoreme.txt'))
-        rimraf.sync(path.join(fixtures, '.dpack'))
+        rimraf.sync(path.join(fixtures, '.dweb'))
         t.end()
       })
     })
@@ -144,22 +144,22 @@ test('importing: import with .dpackignore', function (t) {
   })
 })
 
-test('importing: import with opts.useDPackIgnore false', function (t) {
-  fs.writeFileSync(path.join(fixtures, '.dpackignore'), 'ignoreme.txt')
+test('importing: import with opts.useDWebIgnore false', function (t) {
+  fs.writeFileSync(path.join(fixtures, '.dwebignore'), 'ignoreme.txt')
   fs.writeFileSync(path.join(fixtures, 'ignoreme.txt'), 'hello world')
-  DPack(fixtures, {temp: true}, function (err, dpack) {
+  DWeb(fixtures, {temp: true}, function (err, dweb) {
     t.error(err)
     var fileImported = false
-    var importer = dpack.importFiles({useDPackIgnore: false}, function (err) {
+    var importer = dweb.importFiles({useDWebIgnore: false}, function (err) {
       t.error(err)
 
-      var shouldIgnore = dpack.options.importer.ignore
-      t.ok(shouldIgnore('.dpack'), '.dpack ignored')
-      dpack.close(function () {
-        if (!fileImported) t.fail('file in .dpackignore not imported')
-        fs.unlinkSync(path.join(fixtures, '.dpackignore'))
+      var shouldIgnore = dweb.options.importer.ignore
+      t.ok(shouldIgnore('.dweb'), '.dweb ignored')
+      dweb.close(function () {
+        if (!fileImported) t.fail('file in .dwebignore not imported')
+        fs.unlinkSync(path.join(fixtures, '.dwebignore'))
         fs.unlinkSync(path.join(fixtures, 'ignoreme.txt'))
-        rimraf.sync(path.join(fixtures, '.dpack'))
+        rimraf.sync(path.join(fixtures, '.dweb'))
         t.end()
       })
     })
@@ -177,15 +177,15 @@ test('importing: import from hidden folder src', function (t) {
     dir = path.join(dir, '.hidden')
     fs.mkdirSync(dir)
     fs.writeFileSync(path.join(dir, 'hello.txt'), 'hello world')
-    DPack(dir, {temp: true}, function (err, dpack) {
+    DWeb(dir, {temp: true}, function (err, dweb) {
       t.error(err, 'no error')
-      dpack.importFiles(function (err) {
+      dweb.importFiles(function (err) {
         t.error(err)
-        t.same(dpack.vault.version, 1, 'vault has 1 file')
-        dpack.vault.stat('/hello.txt', function (err, stat) {
+        t.same(dweb.vault.version, 1, 'vault has 1 file')
+        dweb.vault.stat('/hello.txt', function (err, stat) {
           t.error(err, 'no error')
           t.ok(stat, 'file added')
-          dpack.close(function () {
+          dweb.close(function () {
             cleanup(function () {
               t.end()
             })

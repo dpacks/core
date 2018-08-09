@@ -5,23 +5,23 @@ var xtend = require('xtend')
 var ddrive = require('@ddrive/core')
 var resolveDWebLink = require('@dwebs/resolve')
 var debug = require('debug')('@dpack/core')
-var dpackStore = require('./lib/storage')
-var DPack = require('./dpack')
+var dwebStore = require('./lib/storage')
+var DWeb = require('./dweb')
 
-module.exports = createDPack
+module.exports = createDWeb
 
 /**
- * Create a DPack instance, vault storage, and ready the vault.
+ * Create a DWeb instance, vault storage, and ready the vault.
  * @param {string|object} dirOrStorage - Directory or ddrive storage object.
- * @param {object} [opts] - DPack-node options and any ddrive init options.
+ * @param {object} [opts] - DWeb-node options and any ddrive init options.
  * @param {String|Buffer} [opts.key] - Hyperdrive key
  * @param {Boolean} [opts.createIfMissing = true] - Create storage if it does not exit.
  * @param {Boolean} [opts.errorIfExists = false] - Error if storage exists.
  * @param {Boolean} [opts.temp = false] - Use random-access-memory for temporary storage
- * @param {function(err, dpack)} cb - callback that returns `DPack` instance
+ * @param {function(err, dweb)} cb - callback that returns `DWeb` instance
  * @see defaultStorage for storage information
  */
-function createDPack (dirOrStorage, opts, cb) {
+function createDWeb (dirOrStorage, opts, cb) {
   if (!cb) {
     cb = opts
     opts = {}
@@ -33,10 +33,10 @@ function createDPack (dirOrStorage, opts, cb) {
   var vault
   var key = opts.key
   var dir = (typeof dirOrStorage === 'string') ? dirOrStorage : null
-  var storage = dpackStore(dirOrStorage, opts)
+  var storage = dwebStore(dirOrStorage, opts)
   var createIfMissing = !(opts.createIfMissing === false)
   var errorIfExists = opts.errorIfExists || false
-  var hasDPack = false
+  var hasDWeb = false
   opts = xtend({
     // TODO: make sure opts.dir is a directory, not file
     dir: dir,
@@ -51,25 +51,25 @@ function createDPack (dirOrStorage, opts, cb) {
    * @private
    */
   function checkIfExists () {
-    // Create after we check for pre-sleep .dpack stuff
+    // Create after we check for pre-sleep .dweb stuff
     var createAfterValid = (createIfMissing && !errorIfExists)
 
-    var missingError = new Error('DPack storage does not exist.')
+    var missingError = new Error('DWeb storage does not exist.')
     missingError.name = 'MissingError'
-    var existsError = new Error('DPack storage already exists.')
+    var existsError = new Error('DWeb storage already exists.')
     existsError.name = 'ExistsError'
-    var oldError = new Error('DPack folder contains incompatible metadata. Please remove your metadata (rm -rf .dpack).')
+    var oldError = new Error('DWeb folder contains incompatible metadata. Please remove your metadata (rm -rf .dweb).')
     oldError.name = 'IncompatibleError'
 
-    fs.readdir(path.join(opts.dir, '.dpack'), function (err, files) {
+    fs.readdir(path.join(opts.dir, '.dweb'), function (err, files) {
       // TODO: omg please make this less confusing.
-      var noDPack = !!(err || !files.length)
-      hasDPack = !noDPack
+      var noDWeb = !!(err || !files.length)
+      hasDWeb = !noDWeb
       var validSleep = (files && files.length && files.indexOf('metadata.key') > -1)
-      var badDPack = !(noDPack || validSleep)
+      var badDWeb = !(noDWeb || validSleep)
 
-      if ((noDPack || validSleep) && createAfterValid) return create()
-      else if (badDPack) return cb(oldError)
+      if ((noDWeb || validSleep) && createAfterValid) return create()
+      else if (badDWeb) return cb(oldError)
 
       if (err && !createIfMissing) return cb(missingError)
       else if (!err && errorIfExists) return cb(existsError)
@@ -102,14 +102,14 @@ function createDPack (dirOrStorage, opts, cb) {
       vault.on('error', cb)
       vault.ready(function () {
         debug('vault ready. version:', vault.version)
-        if (hasDPack || (vault.metadata.has(0) && vault.version)) {
+        if (hasDWeb || (vault.metadata.has(0) && vault.version)) {
           vault.resumed = true
         } else {
           vault.resumed = false
         }
         vault.removeListener('error', cb)
 
-        cb(null, new DPack(vault, opts))
+        cb(null, new DWeb(vault, opts))
       })
     }
   }

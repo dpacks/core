@@ -5,7 +5,7 @@ var rimraf = require('rimraf')
 var tmpDir = require('temporary-directory')
 var helpers = require('./helpers')
 
-var DPack = require('..')
+var DWeb = require('..')
 
 // os x adds this if you view the fixtures in finder and breaks the file count assertions
 try { fs.unlinkSync(path.join(__dirname, 'fixtures', '.DS_Store')) } catch (e) { /* ignore error */ }
@@ -19,21 +19,21 @@ test('download: Download with default opts', function (t) {
     tmpDir(function (err, downDir, cleanup) {
       t.error(err, 'error')
 
-      DPack(downDir, {key: shareKey}, function (err, dpack) {
+      DWeb(downDir, {key: shareKey}, function (err, dweb) {
         t.error(err, 'error')
-        t.ok(dpack, 'callsback with dPack object')
-        t.ok(dpack.key, 'has key')
-        t.ok(dpack.vault, 'has vault')
-        t.notOk(dpack.writable, 'vault not writable')
+        t.ok(dweb, 'callsback with dPack object')
+        t.ok(dweb.key, 'has key')
+        t.ok(dweb.vault, 'has vault')
+        t.notOk(dweb.writable, 'vault not writable')
 
-        var stats = dpack.trackStats()
-        var network = dpack.joinNetwork(function () {
+        var stats = dweb.trackStats()
+        var network = dweb.joinNetwork(function () {
           t.pass('joinNetwork calls back okay')
         })
         network.once('connection', function () {
           t.pass('connects via network')
         })
-        var vault = dpack.vault
+        var vault = dweb.vault
         vault.once('content', function () {
           t.pass('gets content')
           vault.content.on('sync', done)
@@ -45,10 +45,10 @@ test('download: Download with default opts', function (t) {
           t.ok(st.downloaded === st.length, 'all blocks downloaded')
           helpers.verifyFixtures(t, vault, function (err) {
             t.error(err, 'error')
-            t.ok(dpack.network, 'network is open')
-            dpack.close(function (err) {
+            t.ok(dweb.network, 'network is open')
+            dweb.close(function (err) {
               t.error(err, 'error')
-              t.equal(dpack.network, undefined, 'network is closed')
+              t.equal(dweb.network, undefined, 'network is closed')
               cleanup(function (err) {
                 t.error(err, 'error')
                 closeShare(function (err) {
@@ -68,17 +68,17 @@ function shareFixtures (opts, cb) {
   if (typeof opts === 'function') cb = opts
   if (!opts) opts = {}
 
-  rimraf.sync(path.join(fixtures, '.dpack')) // for previous failed tests
-  DPack(fixtures, {temp: true}, function (err, dpack) {
+  rimraf.sync(path.join(fixtures, '.dweb')) // for previous failed tests
+  DWeb(fixtures, {temp: true}, function (err, dweb) {
     if (err) return cb(err)
-    dpack.joinNetwork({ dht: false })
-    dpack.importFiles(function (err) {
+    dweb.joinNetwork({ dht: false })
+    dweb.importFiles(function (err) {
       if (err) return cb(err)
-      cb(null, dpack.key, close)
+      cb(null, dweb.key, close)
     })
 
     function close (cb) {
-      dpack.close(function (err) {
+      dweb.close(function (err) {
         cb(err)
         // rimraf if we need it?
       })

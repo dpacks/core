@@ -7,28 +7,28 @@ var importFiles = require('./lib/import-files')
 var createNetwork = require('./lib/network')
 var stats = require('./lib/stats')
 var serveHttp = require('./lib/serve')
-var debug = require('debug')('dat-node')
+var debug = require('debug')('dpack-core')
 
-module.exports = DPack
+module.exports = DWeb
 
 /**
- * @class DPack
+ * @class DWeb
  * @type {Object}
- * @param {Object} vault - Hyperdrive vault
+ * @param {Object} vault - dDrive vault
  * @param {Object} [opts] - Options
  * @param {String} [opts.dir] - Directory of vault
  *
- * @property {Object} vault - Hyperdrive Vault
+ * @property {Object} vault - dDrive Vault
  * @property {String} path - Resolved path of vault
  * @property {Buffer} key - Vault Key (`vault.key`)
  * @property {Boolean} live - Vault is live (`vault.live`)
  * @property {Boolean} writable - Vault is writable (`vault.metadata.writable`)
  * @property {Boolean} version - Vault version (`vault.version`)
  * @property {Object} options - Initial options and all options passed to childen functions.
- * @returns {Object} DPack
+ * @returns {Object} DWeb
  */
-function DPack (vault, opts) {
-  if (!(this instanceof DPack)) return new DPack(vault, opts)
+function DWeb (vault, opts) {
+  if (!(this instanceof DWeb)) return new DWeb(vault, opts)
   assert.ok(vault, 'vault required')
   var self = this
 
@@ -74,14 +74,14 @@ function DPack (vault, opts) {
 }
 
 /**
- * Join DPack Network via Hyperdiscovery
+ * Join DWeb Network via @flockcore/revelation
  * @type {Function}
- * @param {Object} [opts] - Network options, passed to hyperdiscovery.
- * @param {Function} [cb] - Callback after first round of discovery is finished.
- * @returns {Object} Discovery Swarm Instance
+ * @param {Object} [opts] - Network options, passed to @flockcore/revelation.
+ * @param {Function} [cb] - Callback after first round of revelation is finished.
+ * @returns {Object} Revelation Flock Instance
  */
-DPack.prototype.joinNetwork =
-DPack.prototype.join = function (opts, cb) {
+DWeb.prototype.joinNetwork =
+DWeb.prototype.join = function (opts, cb) {
   if (typeof opts === 'function') {
     cb = opts
     opts = {}
@@ -120,12 +120,12 @@ DPack.prototype.join = function (opts, cb) {
 }
 
 /**
- * Leave DPack Network
+ * Leave DWeb Network
  * @type {Function}
  * @param {Function} [cb] - Callback after network is closed
  */
-DPack.prototype.leaveNetwork =
-DPack.prototype.leave = function (cb) {
+DWeb.prototype.leaveNetwork =
+DWeb.prototype.leave = function (cb) {
   if (!this.network) return
   debug('leaveNetwork()')
   // TODO: v8 unreplicate ?
@@ -136,19 +136,19 @@ DPack.prototype.leave = function (cb) {
 }
 
 /**
- * Pause DPack Network
+ * Pause DWeb Network
  * @type {Function}
  */
-DPack.prototype.pause = function () {
+DWeb.prototype.pause = function () {
   debug('pause()')
   this.leave()
 }
 
 /**
- * Resume DPack Network
+ * Resume DWeb Network
  * @type {Function}
  */
-DPack.prototype.resume = function () {
+DWeb.prototype.resume = function () {
   debug('resume()')
   this.join()
 }
@@ -157,7 +157,7 @@ DPack.prototype.resume = function () {
  * Track vault stats
  * @type {Function}
  */
-DPack.prototype.trackStats = function (opts) {
+DWeb.prototype.trackStats = function (opts) {
   opts = xtend({}, opts)
   this.stats = stats(this.vault, opts)
   return this.stats
@@ -171,7 +171,7 @@ DPack.prototype.trackStats = function (opts) {
  * @param {Object} [opts] - Options passed to `mirror-folder` and `dat-ignore`
  * @returns {Object} - Import progress
  */
-DPack.prototype.importFiles = function (src, opts, cb) {
+DWeb.prototype.importFiles = function (src, opts, cb) {
   if (!this.writable) throw new Error('Must be vault owner to import files.')
   if (typeof src !== 'string') return this.importFiles('', src, opts)
   if (typeof opts === 'function') return this.importFiles(src, {}, opts)
@@ -193,19 +193,19 @@ DPack.prototype.importFiles = function (src, opts, cb) {
  * @param {Object} [opts] - Options passed to `mirror-folder` and `dat-ignore`
  * @returns {Object} - node http server instance
  */
-DPack.prototype.serveHttp = function (opts) {
+DWeb.prototype.serveHttp = function (opts) {
   this.server = serveHttp(this.vault, opts)
   return this.server
 }
 
 /**
- * Close DPack vault and other things
+ * Close DWeb vault and other things
  * @type {Function}
  * @param {Function} [cb] - Callback after all items closed
  */
-DPack.prototype.close = function (cb) {
+DWeb.prototype.close = function (cb) {
   cb = cb || noop
-  if (this._closed) return cb(new Error('DPack is already closed'))
+  if (this._closed) return cb(new Error('dPack is already closed'))
 
   var self = this
   self._closed = true
