@@ -166,9 +166,9 @@ DWeb.prototype.trackStats = function (opts) {
 /**
  * Import files to vault via mirror-folder
  * @type {Function}
- * @param {String} [src=dat.path] - Directory or File to import to `vault`.
+ * @param {String} [src=dweb.path] - Directory or File to import to `vault`.
  * @param {Function} [cb] - Callback after import is finished
- * @param {Object} [opts] - Options passed to `mirror-folder` and `dat-ignore`
+ * @param {Object} [opts] - Options passed to `mirror-folder` and `dweb-ignore`
  * @returns {Object} - Import progress
  */
 DWeb.prototype.importFiles = function (src, opts, cb) {
@@ -190,7 +190,7 @@ DWeb.prototype.importFiles = function (src, opts, cb) {
 /**
  * Serve vault over http
  * @type {Function}
- * @param {Object} [opts] - Options passed to `mirror-folder` and `dat-ignore`
+ * @param {Object} [opts] - Options passed to `mirror-folder` and `dweb-ignore`
  * @returns {Object} - node http server instance
  */
 DWeb.prototype.serveHttp = function (opts) {
